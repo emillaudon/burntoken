@@ -312,12 +312,12 @@ contract TestToken is Ownable, IERC20 {
 
     string public constant _name = "TestToken";
     string public constant _symbol = "TSKTJ";
-    uint8 public constant _decimals = 200;
+    uint8 public constant _decimals = 4;
     uint256 public _totalSupply = 0;
     uint256 burnPercentage = 2;
 
     constructor() public {
-        uint256 totalSupply = 200;
+        uint256 totalSupply = 2000000;
         _mint(msg.sender, totalSupply);
     }
 
@@ -430,15 +430,21 @@ contract TestToken is Ownable, IERC20 {
         );
 
         //calculate burn
-        uint256 amountToBurn = mulDiv(amount, burnPercentage, 100);
+        uint256 transactionBurnPercentage = burnPercentage;
+        if (amount >= _totalSupply.div(100)) {
+            transactionBurnPercentage = burnPercentage.mul(2);
+        }
+        uint256 amountToBurn = mulDiv(amount, transactionBurnPercentage, 100);
         uint256 amountAfterBurn = amount.sub(amountToBurn);
 
         _balances[sender] = _balances[sender].sub(amount);
         _balances[recipient] = _balances[recipient].add(amountAfterBurn);
-        _totalSupply = _totalSupply.sub(amountToBurn);
+        _totalSupply = _totalSupply.sub(amountToBurn.div(2));
+
         if (amountToBurn > 0) {
             emit Transfer(sender, recipient, amount.sub(amountToBurn));
-            emit Transfer(sender, address(0), amountToBurn);
+            emit Transfer(sender, address(0), amountToBurn.div(2));
+            emit Transfer(sender, address(this), amountToBurn.div(2));
         } else {
             emit Transfer(sender, recipient, amount);
         }
